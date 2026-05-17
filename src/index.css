@@ -1,0 +1,13 @@
+/* @jsx linter-disable-next-line */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Asegura el truncado de notas largas en varias líneas con máxima compatibilidad */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2; /* Propiedad estándar añadida para compatibilidad */
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+}
