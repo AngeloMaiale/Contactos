@@ -10,49 +10,66 @@ export default function ContactCard({
   const { name, lastName, phone, nickname, notes, avatar } = contact;
   const fullName = `${name} ${lastName}`;
 
-  if (version === 'grid') {
-  return (
-    <div className="group bg-white/80 backdrop-blur-sm border border-white/80 rounded-3xl py-5 px-4 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between w-64 h-80 overflow-hidden box-border">
-      <div className="flex flex-col items-center text-center overflow-hidden cursor-pointer w-full" onClick={() => onSelect(contact)}>
-        
-        {/* Avatar y efecto difuminado */}
-        <div className="relative mb-3 flex-shrink-0">
-          <img src={avatar} alt={fullName} className="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-md flex-shrink-0 z-10 relative" />
-          <div className="absolute inset-0 bg-indigo-400 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-        </div>
-        
-        {/* Contenedor del Nombre */}
-        <div className="w-full min-h-[28px] flex items-center justify-center px-1 mb-0.5 overflow-hidden">
-          <h3 className="font-bold text-base text-slate-800 tracking-tight leading-normal truncate w-full">
-            {fullName}
-          </h3>
-        </div>
-        
-        {/* Apodo */}
-        <p className="text-xs text-slate-400 italic truncate w-full mb-2.5 flex-shrink-0">{nickname ? `"${nickname}"` : 'Sin apodo'}</p>
-        
-        {/* Teléfono */}
-        <span className="bg-indigo-50/80 text-indigo-600 font-bold px-4 py-1 rounded-xl text-xs backdrop-blur-sm border border-indigo-100 flex-shrink-0 mb-3">
-          {phone}
-        </span>
-        
-        {/* Notas con altura de línea corregida para evitar el corte inferior */}
-        <div className="w-full px-1 overflow-hidden">
-          <p className="text-xs text-slate-500 line-clamp-2 text-center leading-relaxed pb-1">
-            {notes}
+  if (version === "grid") {
+    return (
+      <div className="group bg-white/80 backdrop-blur-sm border border-white/80 rounded-3xl py-5 px-4 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1.5 transition-all duration-300 flex flex-col justify-between w-64 h-80 overflow-hidden box-border">
+        <div
+          className="flex flex-col items-center text-center overflow-hidden cursor-pointer w-full"
+          onClick={() => onSelect(contact)}
+        >
+          {/* Avatar con aura brillante */}
+          <div className="relative mb-3 flex-shrink-0">
+            <img
+              src={avatar}
+              alt={fullName}
+              className="w-24 h-24 rounded-full object-cover ring-4 ring-white shadow-md flex-shrink-0 z-10 relative"
+            />
+            <div className="absolute inset-0 bg-indigo-400 rounded-full blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
+          </div>
+
+          {/* Nombre completo con corrección de altura de línea */}
+          <div className="w-full min-h-[28px] flex items-center justify-center px-1 mb-0.5 overflow-hidden">
+            <h3 className="font-bold text-base text-slate-800 tracking-tight leading-normal truncate w-full">
+              {fullName}
+            </h3>
+          </div>
+
+          {/* Apodo */}
+          <p className="text-xs text-slate-400 italic truncate w-full mb-2.5 flex-shrink-0">
+            {nickname ? `"${nickname}"` : "Sin apodo"}
           </p>
+
+          {/* Teléfono estilo Badge */}
+          <span className="bg-indigo-50/80 text-indigo-600 font-bold px-4 py-1 rounded-xl text-xs backdrop-blur-sm border border-indigo-100 flex-shrink-0 mb-3">
+            {phone}
+          </span>
+
+          {/* Notas con recorte seguro (Crop) */}
+          <div className="w-full px-1 overflow-hidden">
+            <p className="text-xs text-slate-500 line-clamp-2 text-center leading-relaxed pb-1">
+              {notes}
+            </p>
+          </div>
         </div>
-        
+
+        {/* Botones de acción (Aparecen con Hover) */}
+        <div className="flex gap-2 mt-2 pt-3 border-t border-slate-200/60 w-full flex-shrink-0 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+          <button
+            onClick={() => onEdit(contact)}
+            className="flex-1 text-xs font-bold bg-white border border-slate-200 shadow-sm hover:border-indigo-300 hover:text-indigo-600 py-2 rounded-xl transition-all"
+          >
+            Editar
+          </button>
+          <button
+            onClick={() => onDelete(contact.id)}
+            className="flex-1 text-xs font-bold bg-white border border-slate-200 shadow-sm hover:border-red-300 hover:text-red-600 py-2 rounded-xl transition-all"
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
-      
-      {/* Botones de acción */}
-      <div className="flex gap-2 mt-2 pt-3 border-t border-slate-200/60 w-full flex-shrink-0 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-        <button onClick={() => onEdit(contact)} className="flex-1 text-xs font-bold bg-white border border-slate-200 shadow-sm hover:border-indigo-300 hover:text-indigo-600 py-2 rounded-xl transition-all">Editar</button>
-        <button onClick={() => onDelete(contact.id)} className="flex-1 text-xs font-bold bg-white border border-slate-200 shadow-sm hover:border-red-300 hover:text-red-600 py-2 rounded-xl transition-all">Eliminar</button>
-      </div>
-    </div>
-  );
-}
+    );
+  }
 
   if (version === "list") {
     return (
