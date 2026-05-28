@@ -83,7 +83,7 @@ export default function App() {
             </svg>
           </div>
           <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-500 tracking-tight">
-            Directorio UI
+            Contactos UI
           </h1>
         </div>
         <button
@@ -123,7 +123,11 @@ export default function App() {
 
           <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 shadow-xl shadow-slate-200/50 min-h-[500px]">
             <div
-              className={`flex flex-wrap gap-6 ${viewVersion === "list" ? "flex-col" : ""}`}
+              className={
+                viewVersion === "list"
+                  ? "flex flex-col gap-5 w-full"
+                  : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
+              }
             >
               {contacts.length === 0 ? (
                 <div className="w-full flex flex-col items-center justify-center py-20 text-slate-400 animate-fade-in">
