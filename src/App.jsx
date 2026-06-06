@@ -1,181 +1,238 @@
-import React, { useState, useEffect } from "react";
-import Login from "./components/Login";
-import ContactForm from "./components/ContactForm";
-import ContactCard from "./components/ContactCard";
-import ContactModal from "./components/ContactModal";
+import React, { useState, useEffect } from 'react';
+import ContactCard from './components/ContactCard';
+import Login from './components/Login';
+import ContactForm from './components/ContactForm';
+import ContactModal from './components/ContactModal';
 
-const INITIAL_CONTACTS = [
-  {
-    id: 1,
-    name: "Ángel",
-    lastName: "García",
-    phone: "+58 412-1234567",
-    nickname: "Gabo",
-    notes: "Compañero de proyecto. Desarrollador principal.",
-    avatar:
-      "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150",
-  },
-  {
-    id: 2,
-    name: "María",
-    lastName: "González",
-    phone: "+58 424-7654321",
-    nickname: "Mari",
-    notes: "Encargada de la base de datos PostgreSQL.",
-    avatar:
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
-  },
+const phonePrefixes = [
+  { code: '+58', label: 'VEN (+58)' },
+  { code: '+1',  label: 'USA/CAN (+1)' },
+  { code: '+34', label: 'ESP (+34)' },
+  { code: '+57', label: 'COL (+57)' },
+  { code: '+54', label: 'ARG (+54)' },
+  { code: '+56', label: 'CHL (+56)' },
+  { code: '+52', label: 'MEX (+52)' },
+  { code: '+51', label: 'PER (+51)' },
 ];
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = localStorage.getItem("dir_contacts");
-    return savedContacts ? JSON.parse(savedContacts) : INITIAL_CONTACTS;
-  });
+  const [loggedUser, setLoggedUser] = useState(null); 
+  const [usersList, setUsersList] = useState([]); 
+  const [isRegistering, setIsRegistering] = useState(false); 
 
-  const [viewVersion, setViewVersion] = useState("grid");
-  const [editingContact, setEditingContact] = useState(null);
-  const [selectedContact, setSelectedContact] = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [viewVersion, setViewVersion] = useState('grid');
+  const [selectedContact, setSelectedContact] = useState(null); 
+  
+  const [authUsername, setAuthUsername] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingContactId, setEditingContactId] = useState(null);
+  const [formName, setFormName] = useState('');
+  const [formLastName, setFormLastName] = useState('');
+  const [formNickname, setFormNickname] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formPhonePrefix, setFormPhonePrefix] = useState('+58'); 
+  const [formNotes, setFormNotes] = useState('');
+  const [formAvatarUrl, setFormAvatarUrl] = useState(''); 
+
   useEffect(() => {
-    localStorage.setItem("dir_contacts", JSON.stringify(contacts));
-  }, [contacts]);
-
-  if (!isAuthenticated)
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
-
-  const handleSaveContact = (formData) => {
-    if (editingContact) {
-      setContacts(
-        contacts.map((c) =>
-          c.id === editingContact.id
-            ? { ...formData, id: editingContact.id }
-            : c,
-        ),
-      );
-      setEditingContact(null);
+    const savedUsers = localStorage.getItem('system_users');
+    if (savedUsers) {
+      setUsersList(JSON.parse(savedUsers));
     } else {
-      setContacts([...contacts, { ...formData, id: Date.now() }]);
+      const defaultUsers = [{ username: 'admin', password: '123' }];
+      localStorage.setItem('system_users', JSON.stringify(defaultUsers));
+      setUsersList(defaultUsers);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loggedUser) {
+      const savedContacts = localStorage.getItem(`contacts_${loggedUser}`);
+      setContacts(savedContacts ? JSON.parse(savedContacts) : []);
+    }
+  }, [loggedUser]);
+
+  const saveContacts = (newContactsList) => {
+    setContacts(newContactsList);
+    if (loggedUser) {
+      localStorage.setItem(`contacts_${loggedUser}`, JSON.stringify(newContactsList));
     }
   };
 
-  const handleDeleteContact = (id) =>
-    setContacts(contacts.filter((c) => c.id !== id));
+  const handleLogin = (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const userObj = usersList.find(
+      (u) => u.username === authUsername.trim().toLowerCase() && u.password === authPassword
+    );
+    if (userObj) {
+      setLoggedUser(userObj.username);
+      setAuthPassword('');
+    } else {
+      setAuthError('Usuario o contraseña incorrectos.');
+    }
+  };
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+    setAuthError(''); setAuthSuccess('');
+    const usernameClean = authUsername.trim().toLowerCase();
+
+    if (!usernameClean || !authPassword || !confirmPassword) {
+      setAuthError('Todos los campos son obligatorios.'); return;
+    }
+    if (authPassword !== confirmPassword) {
+      setAuthError('Las contraseñas no coinciden.'); return;
+    }
+    if (usersList.some((u) => u.username === usernameClean)) {
+      setAuthError('El nombre de usuario ya está registrado.'); return;
+    }
+
+    const updatedUsers = [...usersList, { username: usernameClean, password: authPassword }];
+    localStorage.setItem('system_users', JSON.stringify(updatedUsers));
+    setUsersList(updatedUsers);
+    setAuthSuccess('¡Usuario creado con éxito! Ya puedes iniciar sesión.');
+    setIsRegistering(false); setAuthPassword(''); setConfirmPassword('');
+  };
+
+  const handleLogout = () => {
+    setLoggedUser(null); setAuthUsername(''); setAuthPassword('');
+  };
+
+  const openCreateModal = () => {
+    setEditingContactId(null); setFormName(''); setFormLastName('');
+    setFormNickname(''); setFormPhone(''); setFormPhonePrefix('+58');
+    setFormNotes(''); setFormAvatarUrl(''); setIsFormOpen(true);
+  };
+
+  const openEditModal = (contact) => {
+    setEditingContactId(contact.id); setFormName(contact.name);
+    setFormLastName(contact.lastName); setFormNickname(contact.nickname);
+    setFormNotes(contact.notes); setFormAvatarUrl(contact.avatarUrl || ''); 
+
+    const foundPrefix = phonePrefixes.find(p => contact.phone.startsWith(p.code));
+    if (foundPrefix) {
+      setFormPhonePrefix(foundPrefix.code);
+      setFormPhone(contact.phone.replace(foundPrefix.code, '')); 
+    } else {
+      setFormPhonePrefix('+58'); setFormPhone(contact.phone);
+    }
+    setIsFormOpen(true);
+  };
+
+  const handleSaveContact = (e) => {
+    e.preventDefault();
+    if (!formName.trim() || !formPhone.trim()) return;
+
+    const fullPhone = `${formPhonePrefix}${formPhone.trim().replace(/\s+/g, '')}`;
+
+    if (editingContactId) {
+      const updated = contacts.map((c) =>
+        c.id === editingContactId
+          ? { ...c, name: formName, lastName: formLastName, nickname: formNickname, phone: fullPhone, notes: formNotes, avatarUrl: formAvatarUrl.trim() }
+          : c
+      );
+      saveContacts(updated);
+      if (selectedContact && selectedContact.id === editingContactId) {
+        setSelectedContact({ ...selectedContact, name: formName, lastName: formLastName, nickname: formNickname, phone: fullPhone, notes: formNotes, avatarUrl: formAvatarUrl.trim() });
+      }
+    } else {
+      const newContact = { id: Date.now().toString(), name: formName, lastName: formLastName, nickname: formNickname, phone: fullPhone, notes: formNotes, avatarUrl: formAvatarUrl.trim() };
+      saveContacts([...contacts, newContact]);
+    }
+    setIsFormOpen(false);
+  };
+
+  const handleDeleteContact = (id) => {
+    if (window.confirm('¿Seguro que deseas eliminar este contacto?')) {
+      const filtered = contacts.filter((c) => c.id !== id);
+      saveContacts(filtered);
+      if (selectedContact && selectedContact.id === id) setSelectedContact(null);
+    }
+  };
+
+  if (!loggedUser) {
+    return (
+      <Login 
+        isRegistering={isRegistering} setIsRegistering={setIsRegistering}
+        authUsername={authUsername} setAuthUsername={setAuthUsername}
+        authPassword={authPassword} setAuthPassword={setAuthPassword}
+        confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
+        authError={authError} setAuthError={setAuthError}
+        authSuccess={authSuccess} setAuthSuccess={setAuthSuccess}
+        handleLogin={handleLogin} handleRegister={handleRegister}
+        usersList={usersList}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-mesh flex flex-col font-sans text-slate-800 transition-colors duration-500">
-      {/* Header flotante con efecto cristal */}
-      <header className="sticky top-0 bg-white/70 backdrop-blur-md border-b border-white/50 px-8 py-4 flex justify-between items-center shadow-sm z-20">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-blue-600 to-indigo-500 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.5"
-                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-              ></path>
-            </svg>
+    <div className="min-h-screen bg-slate-950 text-slate-300 font-sans p-6 relative">
+      <div className="max-w-6xl mx-auto bg-slate-900/40 backdrop-blur-md rounded-[2.5rem] border border-slate-900 p-6 shadow-sm">
+        
+        <header className="flex flex-col sm:flex-row justify-between items-center border-b border-slate-800/60 pb-6 mb-6 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100 capitalize">Panel de {loggedUser}</h1>
           </div>
-          <h1 className="text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-500 tracking-tight">
-            Contactos UI
-          </h1>
+          <div className="flex items-center gap-3">
+            <button onClick={openCreateModal} className="bg-indigo-600 text-white hover:bg-indigo-700 font-semibold text-sm px-4 py-2 rounded-xl transition-colors shadow-md shadow-indigo-600/10">
+              + Nuevo Contacto
+            </button>
+            <button onClick={handleLogout} className="bg-slate-800 text-slate-300 hover:bg-slate-700 font-semibold text-sm px-4 py-2 rounded-xl transition-colors border border-slate-700/50">
+              Cerrar Sesión
+            </button>
+          </div>
+        </header>
+
+        <div className="flex gap-2 bg-slate-950 p-1.5 rounded-2xl w-fit mb-6 shadow-inner border border-slate-900">
+          {['grid', 'list', 'compact', 'minimal'].map((v) => (
+            <button key={v} onClick={() => setViewVersion(v)} className={`px-4 py-1.5 rounded-xl font-bold text-xs tracking-wider uppercase transition-all ${viewVersion === v ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}>
+              {v}
+            </button>
+          ))}
         </div>
-        <button
-          onClick={() => setIsAuthenticated(false)}
-          className="text-sm font-semibold text-slate-500 hover:text-red-500 transition-colors px-4 py-2 rounded-xl hover:bg-red-50 hover:shadow-inner"
-        >
-          Cerrar Sesión
-        </button>
-      </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
-        <aside className="lg:col-span-4 space-y-6">
-          <ContactForm
-            onSave={handleSaveContact}
-            currentContact={editingContact}
-            onCancel={() => setEditingContact(null)}
-          />
-        </aside>
-
-        <section className="lg:col-span-8 flex flex-col space-y-6">
-          <div className="bg-white/60 backdrop-blur-xl p-2.5 rounded-2xl border border-white shadow-sm flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 ml-4 uppercase tracking-widest">
-              Visualización
-            </span>
-            <div className="flex bg-slate-200/50 p-1.5 rounded-xl gap-1">
-              {["grid", "list", "compact", "minimal"].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setViewVersion(v)}
-                  className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all duration-300 ${viewVersion === v ? "bg-white shadow-md text-indigo-600 scale-105" : "text-slate-500 hover:text-slate-800 hover:bg-white/50"}`}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
+        {contacts.length === 0 ? (
+          <div className="text-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-slate-800">
+            <p className="text-slate-500 font-medium">No hay contactos en tu agenda. ¡Crea uno nuevo!</p>
           </div>
-
-          <div className="bg-white/40 backdrop-blur-md border border-white/60 rounded-3xl p-6 shadow-xl shadow-slate-200/50 min-h-[500px]">
-            <div
-              className={
-                viewVersion === "list"
-                  ? "flex flex-col gap-5 w-full"
-                  : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full"
-              }
-            >
-              {contacts.length === 0 ? (
-                <div className="w-full flex flex-col items-center justify-center py-20 text-slate-400 animate-fade-in">
-                  <div className="bg-white p-6 rounded-full shadow-inner mb-4">
-                    <svg
-                      className="w-12 h-12 opacity-40"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                      ></path>
-                    </svg>
-                  </div>
-                  <p className="font-medium">El directorio está vacío.</p>
-                </div>
-              ) : (
-                contacts.map((contact, index) => (
-                  <div
-                    key={contact.id}
-                    className="animate-fade-in"
-                    style={{
-                      animationDelay: `${index * 0.05}s`,
-                      animationFillMode: "both",
-                    }}
-                  >
-                    <ContactCard
-                      contact={contact}
-                      version={viewVersion}
-                      onSelect={setSelectedContact}
-                      onEdit={setEditingContact}
-                      onDelete={handleDeleteContact}
-                    />
-                  </div>
-                ))
-              )}
-            </div>
+        ) : (
+          <div className={viewVersion === 'list' ? "flex flex-col gap-4 w-full" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 w-full items-start"}>
+            {contacts.map((contact) => (
+              <ContactCard
+                key={contact.id}
+                contact={contact}
+                version={viewVersion}
+                onEdit={openEditModal}
+                onDelete={handleDeleteContact}
+                onSelect={setSelectedContact} 
+              />
+            ))}
           </div>
-        </section>
-      </main>
+        )}
+      </div>
 
-      <ContactModal
-        contact={selectedContact}
-        onClose={() => setSelectedContact(null)}
+      <ContactModal contact={selectedContact} onClose={() => setSelectedContact(null)} />
+
+      <ContactForm 
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSubmit={handleSaveContact}
+        editingContactId={editingContactId}
+        formName={formName} setFormName={setFormName}
+        formLastName={formLastName} setFormLastName={setFormLastName}
+        formNickname={formNickname} setFormNickname={setFormNickname}
+        formPhone={formPhone} setFormPhone={setFormPhone}
+        formPhonePrefix={formPhonePrefix} setFormPhonePrefix={setFormPhonePrefix}
+        formNotes={formNotes} setFormNotes={setFormNotes}
+        formAvatarUrl={formAvatarUrl} setFormAvatarUrl={setFormAvatarUrl}
+        phonePrefixes={phonePrefixes}
       />
     </div>
   );

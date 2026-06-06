@@ -1,214 +1,89 @@
-import React, { useState, useEffect } from "react";
+import React from 'react';
 
-// Selector serio de códigos con banderas y países principales
-const DIAL_CODES = [
-  { code: "+58", label: "🇻🇪 +58" },
-  { code: "+54", label: "🇦🇷 +54" },
-  { code: "+1", label: "🇺🇸 +1" },
-  { code: "+34", label: "🇪🇸 +34" },
-  { code: "+57", label: "🇨🇴 +57" },
-  { code: "+52", label: "🇲🇽 +52" },
-];
-
-export default function ContactForm({ onSave, currentContact, onCancel }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    lastName: "",
-    nickname: "",
-    notes: "",
-    avatar: "",
-  });
-  const [dialCode, setDialCode] = useState("+58");
-  const [phoneNumber, setPhoneNumber] = useState("");
-
-  useEffect(() => {
-    if (currentContact) {
-      setFormData({
-        name: currentContact.name,
-        lastName: currentContact.lastName,
-        nickname: currentContact.nickname || "",
-        notes: currentContact.notes || "",
-        avatar: currentContact.avatar || "",
-      });
-
-      // Separar el código de área del número al editar
-      const parts = currentContact.phone.split(" ");
-      if (parts.length > 1) {
-        setDialCode(parts[0]);
-        setPhoneNumber(parts.slice(1).join(""));
-      } else {
-        setPhoneNumber(currentContact.phone);
-      }
-    } else {
-      setFormData({
-        name: "",
-        lastName: "",
-        nickname: "",
-        notes: "",
-        avatar: "",
-      });
-      setDialCode("+58");
-      setPhoneNumber("");
-    }
-  }, [currentContact]);
-
-  // VALIDACIÓN: Solo letras y espacios
-  const handleTextOnly = (e, field) => {
-    const value = e.target.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, "");
-    setFormData({ ...formData, [field]: value });
-  };
-
-  // VALIDACIÓN: Solo números
-  const handleNumberOnly = (e) => {
-    const value = e.target.value.replace(/\D/g, "");
-    setPhoneNumber(value);
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    onSave({
-      ...formData,
-      phone: `${dialCode} ${phoneNumber}`,
-      avatar:
-        formData.avatar ||
-        "https://ui-avatars.com/api/?name=" +
-          formData.name +
-          "+" +
-          formData.lastName +
-          "&background=random",
-    });
-  };
+export default function ContactForm({
+  isOpen,
+  onClose,
+  onSubmit,
+  editingContactId,
+  formName, setFormName,
+  formLastName, setFormLastName,
+  formNickname, setFormNickname,
+  formPhone, setFormPhone,
+  formPhonePrefix, setFormPhonePrefix,
+  formNotes, setFormNotes,
+  formAvatarUrl, setFormAvatarUrl,
+  phonePrefixes
+}) {
+  if (!isOpen) return null;
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col gap-4"
-    >
-      <h2 className="text-xl font-bold text-slate-800 mb-2">
-        {currentContact ? "Editar Contacto" : "Nuevo Contacto"}
-      </h2>
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-900 rounded-3xl p-6 shadow-2xl max-w-lg w-full border border-slate-800 animate-in fade-in zoom-in-95 duration-150 relative z-10">
+        <h3 className="text-xl font-bold text-slate-100 mb-4">
+          {editingContactId ? 'Editar Contacto' : 'Añadir Nuevo Contacto'}
+        </h3>
+        
+        <form onSubmit={onSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Nombre *</label>
+            <input type="text" maxLength={30} value={formName} onChange={(e) => setFormName(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 placeholder-slate-700" placeholder="Ej. Juan" required />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Apellido</label>
+            <input type="text" maxLength={30} value={formLastName} onChange={(e) => setFormLastName(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 placeholder-slate-700" placeholder="Ej. Pérez" />
+          </div>
+          <div>
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Apodo (Nickname)</label>
+            <input type="text" maxLength={20} value={formNickname} onChange={(e) => setFormNickname(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 placeholder-slate-700" placeholder="Ej. Juancito" />
+          </div>
+          
+          <div className="min-w-0">
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Teléfono *</label>
+            <div className="flex gap-2 w-full min-w-0">
+              <select
+                value={formPhonePrefix}
+                onChange={(e) => setFormPhonePrefix(e.target.value)}
+                className="px-2 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-none focus:border-indigo-500 cursor-pointer w-28 flex-shrink-0"
+              >
+                {phonePrefixes.map((p) => (
+                  <option key={p.code} value={p.code} className="bg-slate-900 text-slate-300">
+                    {p.label}
+                  </option>
+                ))}
+              </select>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-xs font-bold text-slate-500 mb-1 block">
-            Nombre
-          </label>
-          <input
-            required
-            type="text"
-            maxLength="30"
-            value={formData.name}
-            onChange={(e) => handleTextOnly(e, "name")}
-            className="w-full bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 transition-all"
-            placeholder="Ej. Ángel"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold text-slate-500 mb-1 block">
-            Apellido
-          </label>
-          <input
-            required
-            type="text"
-            maxLength="30"
-            value={formData.lastName}
-            onChange={(e) => handleTextOnly(e, "lastName")}
-            className="w-full bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 transition-all"
-            placeholder="Ej. García"
-          />
-        </div>
-      </div>
+              <input
+                type="tel"
+                maxLength={15}
+                value={formPhone}
+                onChange={(e) => setFormPhone(e.target.value.replace(/\D/g, ''))} 
+                className="min-w-0 flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 placeholder-slate-700"
+                placeholder="Ej. 4125551234"
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="sm:col-span-2">
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">URL de la Imagen de Perfil</label>
+            <input type="url" value={formAvatarUrl} onChange={(e) => setFormAvatarUrl(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 placeholder-slate-700" placeholder="https://ejemplo.com/foto.jpg" />
+          </div>
 
-      <div>
-        <label className="text-xs font-bold text-slate-500 mb-1 block">
-          Teléfono Móvil
-        </label>
-        <div className="flex gap-2">
-          <select
-            value={dialCode}
-            onChange={(e) => setDialCode(e.target.value)}
-            className="bg-slate-50 border border-slate-200 px-2 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 font-medium cursor-pointer"
-          >
-            {DIAL_CODES.map((country) => (
-              <option key={country.code} value={country.code}>
-                {country.label}
-              </option>
-            ))}
-          </select>
-          {/* maxLength en el teléfono */}
-          <input
-            required
-            type="text"
-            maxLength="15"
-            value={phoneNumber}
-            onChange={handleNumberOnly}
-            className="flex-1 bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 transition-all"
-            placeholder="412 1234567"
-          />
-        </div>
-      </div>
+          <div className="sm:col-span-2">
+            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">Notas / Descripción</label>
+            <textarea rows={3} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-indigo-500 resize-none placeholder-slate-700" placeholder="Detalles o anotaciones sobre el contacto..."></textarea>
+          </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="text-xs font-bold text-slate-500 mb-1 block">
-            Apodo (Opcional)
-          </label>
-          <input
-            type="text"
-            maxLength="20"
-            value={formData.nickname}
-            onChange={(e) =>
-              setFormData({ ...formData, nickname: e.target.value })
-            }
-            className="w-full bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 transition-all"
-          />
-        </div>
-        <div>
-          <label className="text-xs font-bold text-slate-500 mb-1 block">
-            URL Foto (Opcional)
-          </label>
-          {/* A la URL no le ponemos un límite tan corto, la dejamos con 200 */}
-          <input
-            type="url"
-            maxLength="200"
-            value={formData.avatar}
-            onChange={(e) =>
-              setFormData({ ...formData, avatar: e.target.value })
-            }
-            className="w-full bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 transition-all"
-            placeholder="https://..."
-          />
-        </div>
+          <div className="sm:col-span-2 flex gap-2 justify-end mt-2 pt-4 border-t border-slate-800">
+            <button type="button" onClick={onClose} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm font-semibold hover:bg-slate-700 transition-colors border border-slate-700/60">
+              Cancelar
+            </button>
+            <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm">
+              {editingContactId ? 'Guardar Cambios' : 'Crear Contacto'}
+            </button>
+          </div>
+        </form>
       </div>
-      <div>
-        <label className="text-xs font-bold text-slate-500 mb-1 block">
-          Notas
-        </label>
-        <textarea
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          rows="3"
-          className="w-full bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all resize-none"
-        ></textarea>
-      </div>
-
-      <div className="flex gap-3 mt-2">
-        <button
-          type="submit"
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition-colors text-sm"
-        >
-          {currentContact ? "Guardar Cambios" : "Registrar"}
-        </button>
-        {currentContact && (
-          <button
-            type="button"
-            onClick={onCancel}
-            className="flex-1 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-800 font-bold py-2.5 rounded-xl transition-colors text-sm"
-          >
-            Cancelar
-          </button>
-        )}
-      </div>
-    </form>
+    </div>
   );
 }
