@@ -149,6 +149,45 @@ export default function App() {
     setIsFormOpen(false);
   };
 
+  const handleDeleteUser = (username) => {
+    if (username === 'admin') {
+      alert('El usuario "admin" es el administrador por defecto del sistema y no puede ser eliminado.');
+      return;
+    }
+
+    if (window.confirm(`¿Estás completamente seguro de eliminar al usuario "${username}"? Esto borrará permanentemente toda su agenda de contactos.`)) {
+
+      const updatedUsers = usersList.filter((u) => u.username !== username);
+      localStorage.setItem('system_users', JSON.stringify(updatedUsers));
+      setUsersList(updatedUsers);
+
+      localStorage.removeItem(`contacts_${username}`);
+      
+      if (authUsername.toLowerCase() === username) {
+        setAuthUsername('');
+        setAuthPassword('');
+      }
+
+      alert(`Usuario "${username}" y sus contactos eliminados correctamente.`);
+    }
+  };
+
+  if (!loggedUser) {
+    return (
+      <Login 
+        isRegistering={isRegistering} setIsRegistering={setIsRegistering}
+        authUsername={authUsername} setAuthUsername={setAuthUsername}
+        authPassword={authPassword} setAuthPassword={setAuthPassword}
+        confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
+        authError={authError} setAuthError={setAuthError}
+        authSuccess={authSuccess} setAuthSuccess={setAuthSuccess}
+        handleLogin={handleLogin} handleRegister={handleRegister}
+        usersList={usersList}
+        onDeleteUser={handleDeleteUser} 
+      />
+    );
+  }
+
   const handleDeleteContact = (id) => {
     if (window.confirm('¿Seguro que deseas eliminar este contacto?')) {
       const filtered = contacts.filter((c) => c.id !== id);

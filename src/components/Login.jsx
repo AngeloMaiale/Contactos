@@ -15,7 +15,8 @@ export default function Login({
   setAuthSuccess,
   handleLogin,
   handleRegister,
-  usersList
+  usersList,
+  onDeleteUser 
 }) {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
@@ -87,9 +88,17 @@ export default function Login({
         <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Usuarios registrados en el sistema</p>
         <div className="flex flex-wrap justify-center gap-2">
           {usersList.map((u, index) => (
-            <span key={index} className="px-3 py-1.5 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg text-xs font-mono shadow-md">
-              👤 {u.username}
-            </span>
+            <div key={index} className="flex items-center bg-slate-900 border border-slate-800 text-slate-300 rounded-lg text-xs font-mono shadow-md overflow-hidden">
+              <span className="pl-3 py-1.5 pr-2">👤 {u.username}</span>
+
+              <button 
+                onClick={() => onDeleteUser(u.username)}
+                className="px-2 py-1.5 bg-slate-950/40 hover:bg-red-950/60 text-slate-500 hover:text-red-400 border-l border-slate-800/80 transition-colors font-sans text-sm font-bold"
+                title={`Eliminar usuario ${u.username}`}
+              >
+                &times;
+              </button>
+            </div>
           ))}
         </div>
       </div>
